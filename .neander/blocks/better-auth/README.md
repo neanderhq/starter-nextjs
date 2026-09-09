@@ -1,0 +1,13 @@
+# Better Auth + Drizzle, version 1
+
+Requires the Drizzle block. Add `pnpm add better-auth@1.7.3 @better-auth/drizzle-adapter@1.7.3`; `pnpm add -D auth@1.7.3`. Copy `.example` files to their shown paths without the suffix, merging existing modules.
+
+Supply local `BETTER_AUTH_SECRET` (a new 32-byte random secret), `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in gitignored `.env.local`. Local origin defaults to `http://localhost:3000`; production requires `BETTER_AUTH_URL`. Append these environment requirements for service `web`: `BETTER_AUTH_URL` uses `source: provisioned, provider: Neander, binding: public_origin`; `BETTER_AUTH_SECRET` uses `source: generated, generator: opaque-random`; both Google variables use `source: user`. All are required. Retain the existing Neon `DATABASE_URL` and migration profile.
+
+Generate the auth tables from the pinned library: `pnpm exec auth generate --config .neander/auth-schema-config.ts --output server/auth-schema.ts --yes`. Append `export * from "./auth-schema"` to `server/schema.ts`; generate and review a new Drizzle migration, then explicitly migrate the development database. Commit the generated schema/migrations and lockfile. Production migration runs through the isolated Publish step, never app startup.
+
+Register `<planned origin>/api/auth/callback/google` with Google. In a client component call `authClient.signIn.social({ provider: "google", callbackURL: "/" })`; use `authClient.useSession()` and `authClient.signOut()`. `/api/me` demonstrates an authoritative server session check. For private application records, apply the same check to every read/write and scope database queries by `session.user.id`; do not assume installing auth protects the public todo demonstration automatically. Account auto-linking is disabled.
+
+Verify production build needs no credentials, anonymous `/api/me` returns 401, untrusted-origin sign-in/sign-out is rejected, OAuth state/callback succeeds with the configured provider, and the session survives an app restart using the same database/secret. Live Google callback verification requires actual provider credentials and registration; isolated tests cannot certify it. Sources: [Next integration](https://better-auth.com/docs/integrations/next), [Drizzle adapter/schema generation](https://better-auth.com/docs/adapters/drizzle).
+
+With a disposable development database, `node --env-file=.env.local .neander/check-auth.mjs <local-origin>` checks anonymous/tampered cookies, a seeded persisted session, CSRF and logout through HTTP. It removes its test user. This deliberately bypasses Google in the test fixture, not in application code. OAuth access/refresh tokens are encrypted by Better Auth at rest.
