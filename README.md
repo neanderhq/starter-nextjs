@@ -6,6 +6,8 @@ Publish uses `.neander/compose.yaml`. For local production verification, run `do
 
 Add database/auth/API dependencies only when requested. Use server-side runtime environment variables for callback and backend origins; `NEXT_PUBLIC_*` values are frozen during the build. Keep browser calls relative to `/api`. Never commit `.env` files with credentials. Stack provenance is in `docs/architecture/stack-decision.md`.
 
+When adding persistence, follow the [Drizzle development database setup](.neander/blocks/drizzle/README.md#local-development-database): use local Docker PostgreSQL, an existing development PostgreSQL instance, or optional managed development Neon. The opt-in local Compose file is separate from the production recipe; a bare starter does not start a database.
+
 
 ## Maintenance and verification
 
