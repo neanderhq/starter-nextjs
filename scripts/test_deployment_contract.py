@@ -54,6 +54,17 @@ class DeploymentExamplesTests(unittest.TestCase):
                 self.assertNotIn('environment', recipe['services']['web'])
                 self.assertTrue((ROOT / recipe['services']['web']['build']['dockerfile']).is_file())
 
+    def test_better_auth_uses_cli_schema_then_drizzle_migration(self):
+        readme = (ROOT / '.neander/blocks/better-auth/README.md').read_text()
+        self.assertIn('pnpm exec auth generate', readme)
+        self.assertIn('--config .neander/auth-schema-config.ts', readme)
+        self.assertIn('--output server/auth-schema.ts', readme)
+        self.assertIn('pnpm exec drizzle-kit generate', readme)
+        self.assertIn('Do not use `auth migrate`', readme)
+        self.assertIn('node --env-file=.env.local .neander/migrate.mjs', readme)
+        checker = (ROOT / '.neander/blocks/better-auth/.neander/check-auth.mjs.example').read_text()
+        self.assertIn('runtime verification only', checker)
+
 
 if __name__ == '__main__':
     unittest.main()
